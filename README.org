@@ -1,0 +1,6 @@
+* Vecrat
+Applies constant velocity to mouse affected by external commands, communication is through a shared memory file.
+** Vecrat server
+Holds an array of integer determining velocities with a two pointers (x, y) for selecting from the array. Then repeatedly read from  applies those vectors to mouse through xwarppointer unless the array pointers are both set to zero.
+** Vecrat client
+Opens a shared memory file then takes two args of type int, stores them in an array of two, then writes to memory file.
