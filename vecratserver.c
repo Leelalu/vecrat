@@ -3,8 +3,11 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <semaphore.h>
+#include <unistd.h>
 #include <X11/Xlib.h>
 
 // Definitions
@@ -33,6 +36,7 @@ int main() {
   // Set vecArrLen
   vecArrLen=sizeof(vecArr)/sizeof(int);
 
+  printf("HERE");
 
   // Map pointer to memory w/ SHMKEY
   if((shmId=shmget(SHMKEY, SHMSIZE, IPC_CREAT | 0770)) < 0){
@@ -45,18 +49,16 @@ int main() {
     perror("shmmat");
     return(0);
   }
-  printf("HERE");
-
 
   // Create semaphore for locking
-  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < 0){
+  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < SEM_FAILED && semPntr!=NULL){
     printf("Lock memory failed...\n");
     perror("sem_open");
     return(0);
   }
 
   // Initialize semaphore
-  if(sem_init(&semPntr, 1, 1) < 0){
+  if((sem_init(&semPntr, 1, 1)) < 0){
     printf("Initializing semaphore...\n");
     perror("sem_init");
     return(0);
@@ -114,7 +116,7 @@ int main() {
   }
 
   // Close out memory
-  shm_unlink(shmPntr);
+  shm_unlink("shmPntr");
   sem_close(semPntr);
 
   // Exit

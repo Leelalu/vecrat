@@ -3,9 +3,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
-#include <semaphore.h>
 #include <fcntl.h>
+#include <semaphore.h>
 
 #define SHMKEY 893422
 #define SHMSIZE 8
@@ -30,7 +31,7 @@ int main(int argc, char **argv){
   }
 
   // Lock memory
-  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < 0){
+  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < SEM_FAILED){
     printf("Unable to set semaphore struct...\n");
     perror("sem_open");
     return(0);
@@ -54,7 +55,7 @@ int main(int argc, char **argv){
   sem_post(&semPntr);
 
   // Close out memory
-  shm_unlink(shmPntr);
+  shm_unlink("shmPntr");
   sem_close(semPntr);
 
   // Exit
