@@ -44,7 +44,7 @@ int main(int argc, char **argv){
   }
 
   // Lock semaphore while reading/writing
-  sem_post(&semPntr);
+  sem_wait(&semPntr);
 
   // Write args to var
   shmPntr[0]=atoi(argv[1]);

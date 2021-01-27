@@ -16,7 +16,11 @@
 
 // Setup vars
 int quitRequest = 0;
-int vecArr[13] = {0, 10, 5, 10, 10, 15, 15, 20, 20, 25, 25, 30, 35};
+int vecArr[25] = {00, 05, 05, 10, 10,
+                  15, 15, 20, 20, 25,
+                  25, 30, 35, 40, 40,
+                  43, 46, 50, 55, 60,
+                  65, 65, 75, 80, 85};
 int vecArrPos[2] = {0, 0};
 int vecArrLen;
 int shmId;
@@ -69,6 +73,8 @@ int main() {
   // Program loop
   //  while(!quitRequest){
   while(!quitRequest){
+    // Lock semaphore while reading/writing
+    sem_wait(&semPntr);
     // Check for codes
     /* Exit Code */
     if(shmPntr[0]==CODEEXIT && shmPntr[1]==CODEEXIT){
@@ -77,32 +83,33 @@ int main() {
     else{
       /* Stop/Zero out Code */
       if(shmPntr[0]==CODESTOP && shmPntr[1]==CODESTOP){
-        quitRequest=1;
+        shmPntr[0]=shmPntr[1]=0;
+        vecArrPos[0]=vecArrPos[1]=0;
       }
-      // Lock semaphore while reading/writing
-      sem_post(&semPntr);
 	    // Add shmPntr to vecArrPos
       vecArrPos[0]=vecArrPos[0]+shmPntr[0];
 	    vecArrPos[1]=vecArrPos[1]+shmPntr[1];
+      printf("shm1:%d shm2:%d\n", shmPntr[0], shmPntr[1]);
 	    // Zero out shmPntr
       shmPntr[0]=shmPntr[1]=0;
       // Unlock semaphore for reading/writing
       sem_post(&semPntr);
 	    // Trim vecArrPos to bounds of vecArr
-	    if(vecArrPos[0]<0){vecArrPos[0]=0;}
-	    if(vecArrPos[1]<0){vecArrPos[1]=0;}
+	    if(vecArrPos[0]<(vecArrLen*-1)){vecArrPos[0]=vecArrLen*-1;}
+	    if(vecArrPos[1]<(vecArrLen*-1)){vecArrPos[1]=vecArrLen*-1;}
 	    if(vecArrPos[0]>vecArrLen){vecArrPos[0]=vecArrLen;}
 	    if(vecArrPos[1]>vecArrLen){vecArrPos[1]=vecArrLen;}
-	    printf("%d\n", vecArrPos[0]);
-	    printf("%d\n", vecArrPos[1]);
+      printf("vap:%d vap:%d\n", vecArrPos[0], vecArrPos[1]);
 	    // Apply mouse velocity
 	    XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, vecArrPos[0], vecArrPos[1]);
 	    XFlush(XDisplay);
-	    // Decrament vecArrPos
-	    vecArrPos[0]--;
-	    vecArrPos[1]--;
+	    // Increment/Decrament vecArrPos
+      if(vecArrPos[0]>0){vecArrPos[0]--;}
+      if(vecArrPos[1]>0){vecArrPos[1]--;}
+      if(vecArrPos[0]<0){vecArrPos[0]++;}
+      if(vecArrPos[1]<0){vecArrPos[1]++;}
 	    // Sleep/Pause
-	    usleep(7500);
+	    usleep(50000);
     }
   }
 
