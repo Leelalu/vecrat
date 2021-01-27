@@ -8,7 +8,7 @@ vecrat: vecratserver.c vecratclient.c
 debug:
 	$(CC) -g $(CLIENTFLAGS) vecratclient.c -o vecrat
 	$(CC) -g $(SERVFLAGS) vecratserver.c -o vecratserver
-intstall:
+install:
 	sudo $(CC) $(CLIENTFLAGS) vecratclient.c -o /usr/local/bin/vecrat
 	sudo $(CC) $(SERVFLAGS) vecratserver.c -o /usr/local/bin/vecratserver
 clean:
