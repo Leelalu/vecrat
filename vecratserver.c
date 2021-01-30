@@ -9,11 +9,9 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
+#include "memsetup.h"
 
 // Definitions
-#define SHMKEY 893422
-#define SHMSIZE 8
-#define SEMNAME "vecratsem"
 #define CODEEXIT 999
 #define CODESTOP 111
 
@@ -32,36 +30,16 @@ sem_t *semPntr;
 Display *XDisplay;
 Window XRootWin;
 
-int main() {
+
+
+ int main() {
   // Set vecArrLen
   vecArrLen=sizeof(vecArr)/sizeof(int);
 
-  printf("HERE");
-
-  // Map pointer to memory w/ SHMKEY
-  if((shmId=shmget(SHMKEY, SHMSIZE, IPC_CREAT | 0770)) < 0){
-    printf("Unable to get memory space...\n");
-    perror("shmget");
-    return(0);
-  }
-  else if((shmPntr=shmat(shmId, NULL, IPC_CREAT | 0770)) < 0){
-    printf("Unable to get memory space...\n");
-    perror("shmmat");
-    return(0);
-  }
-
-  // Create semaphore for locking
-  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < SEM_FAILED && semPntr!=NULL){
-    printf("Lock memory failed...\n");
-    perror("sem_open");
-    return(0);
-  }
-
-  // Initialize semaphore
-  if((sem_init(&semPntr, 1, 1)) < 0){
-    printf("Initializing semaphore...\n");
-    perror("sem_init");
-    return(0);
+  // Set shared memory/semaphore
+  if(memSetup(&shmId, &shmPntr, &semPntr) < 0){
+    printf("Initalizing shared memory and semaphor failed...");
+    return(-1);
   }
 
   // Zero out shmPntr
@@ -73,7 +51,6 @@ int main() {
   XSelectInput(XDisplay, XRootWin, KeyReleaseMask);
 
   // Program loop
-  //  while(!quitRequest){
   while(!quitRequest){
     // Lock semaphore while reading/writing
     sem_wait(&semPntr);
@@ -88,35 +65,33 @@ int main() {
         shmPntr[0]=shmPntr[1]=0;
         vecArrPos[0]=vecArrPos[1]=0;
       }
-	    // Add shmPntr to vecArrPos
+      // Add shmPntr to vecArrPos
       vecArrPos[0]=vecArrPos[0]+shmPntr[0];
-	    vecArrPos[1]=vecArrPos[1]+shmPntr[1];
-      printf("shm1:%d shm2:%d\n", shmPntr[0], shmPntr[1]);
-	    // Zero out shmPntr
+      vecArrPos[1]=vecArrPos[1]+shmPntr[1];
+      // Zero out shmPntr
       shmPntr[0]=shmPntr[1]=0;
       // Unlock semaphore for reading/writing
       sem_post(&semPntr);
-	    // Trim vecArrPos to bounds of vecArr
-	    if(vecArrPos[0]<(vecArrLen*-1)){vecArrPos[0]=vecArrLen*-1;}
-	    if(vecArrPos[1]<(vecArrLen*-1)){vecArrPos[1]=vecArrLen*-1;}
-	    if(vecArrPos[0]>vecArrLen){vecArrPos[0]=vecArrLen;}
-	    if(vecArrPos[1]>vecArrLen){vecArrPos[1]=vecArrLen;}
-      printf("vap:%d vap:%d\n", vecArrPos[0], vecArrPos[1]);
-	    // Apply mouse velocity
-	    XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, vecArrPos[0], vecArrPos[1]);
-	    XFlush(XDisplay);
-	    // Increment/Decrament vecArrPos
+      // Trim vecArrPos to bounds of vecArr
+      if(vecArrPos[0]<(vecArrLen*-1)){vecArrPos[0]=vecArrLen*-1;}
+      if(vecArrPos[1]<(vecArrLen*-1)){vecArrPos[1]=vecArrLen*-1;}
+      if(vecArrPos[0]>vecArrLen){vecArrPos[0]=vecArrLen;}
+      if(vecArrPos[1]>vecArrLen){vecArrPos[1]=vecArrLen;}
+      // Apply mouse velocity
+      XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, vecArrPos[0], vecArrPos[1]);
+      XFlush(XDisplay);
+      // Increment/Decrament vecArrPos
       if(vecArrPos[0]>0){vecArrPos[0]--;}
       if(vecArrPos[1]>0){vecArrPos[1]--;}
       if(vecArrPos[0]<0){vecArrPos[0]++;}
       if(vecArrPos[1]<0){vecArrPos[1]++;}
-	    // Sleep/Pause
-	    usleep(50000);
+      // Sleep/Pause
+      usleep(50000);
     }
   }
 
   // Close out memory
-  shm_unlink("shmPntr");
+  shm_unlink(shmPntr);
   sem_close(semPntr);
 
   // Exit

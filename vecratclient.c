@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <semaphore.h>
+#include "memsetup.h"
 
 #define SHMKEY 893422
 #define SHMSIZE 8
@@ -18,30 +19,10 @@ sem_t *semPntr;
 
 
 int main(int argc, char **argv){
-  // Map pointer to memory w/ SHMKEY
-  if((shmId=shmget(SHMKEY, SHMSIZE, IPC_CREAT | O_RDWR)) < 0){
-    printf("Unable to get memory space...\n");
-    perror("shmget");
-    return(0);
-  }
-  else if((shmPntr=shmat(shmId, NULL, IPC_CREAT | O_RDWR)) < 0){
-    printf("Unable to get memory space...\n");
-    perror("shmmat");
-    return(0);
-  }
-
-  // Lock memory
-  if((semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < SEM_FAILED){
-    printf("Unable to set semaphore struct...\n");
-    perror("sem_open");
-    return(0);
-  }
-
-  // Initialize semaphore
-  if(sem_init(&semPntr, 1, 1) < 0){
-    printf("Initializing semaphore...\n");
-    perror("sem_init");
-    return(0);
+  // Set shared memory/semaphore
+  if(memSetup(&shmId, &shmPntr, &semPntr) < 0){
+    printf("Initalizing shared memory and semaphor failed...");
+    return(-1);
   }
 
   // Lock semaphore while reading/writing
