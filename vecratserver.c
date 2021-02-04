@@ -1,66 +1,85 @@
+// Includes
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <semaphore.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include "memsetup.h"
 
+
 // Definitions
+#define SOCKADDR "vecratserversocket"
 #define CODEEXIT 999
 #define CODESTOP 111
 
-// Setup vars
-int quitRequest = 0;
+
+// Vars
 int vecArr[25] = {00, 05, 05, 10, 10,
                   15, 15, 20, 20, 25,
                   25, 30, 35, 40, 40,
                   43, 46, 50, 55, 60,
                   65, 65, 75, 80, 85};
-int vecArrPos[2] = {0, 0};
+int vecArrPos[2];
 int vecArrLen;
-int shmId;
-int *shmPntr;
-sem_t *semPntr;
 Display *XDisplay;
 Window XRootWin;
+int quitRequest = 0;
 
 
+int main() {
+  // Setup
+  // Set quit request
+  quitRequest = 0;
 
- int main() {
   // Set vecArrLen
   vecArrLen=sizeof(vecArr)/sizeof(int);
 
-  // Set shared memory/semaphore
-  if(memSetup(&shmId, &shmPntr, &semPntr) < 0){
-    printf("Initalizing shared memory and semaphor failed...");
+  // Setup shared memory for server
+  if((memServSetup(&shmId, &shmPntr, &shmStruct))< 0){
+    printf("Initializing shared memory failed...\n");
     return(-1);
   }
 
-  // Zero out shmPntr
-  shmPntr[0]=shmPntr[1]=0;
+  // Setup semaphore
+  if((semSetup(&semPntr)) < 0){
+    printf("Initializing semaphore failed...\n");
+    return(-1);
+  }
 
-  // Setup for xwarppointer
-  XDisplay = XOpenDisplay(0);
+  // Zero out shmPntr and vecArrPos
+  shmPntr[0]=shmPntr[1]=0;
+  vecArrPos[0]=vecArrPos[1]=0;
+
+  // Setup XDisplay/Window for xwarppointer
+  if((XDisplay = XOpenDisplay(0)) == NULL){
+    printf("Opening x display failed...\n");
+    perror("XOpenDisplay");
+    return(1);
+  }
   XRootWin = XRootWindow(XDisplay, 0);
   XSelectInput(XDisplay, XRootWin, KeyReleaseMask);
 
+
+  // Main program loop
   // Program loop
   while(!quitRequest){
     // Lock semaphore while reading/writing
-    sem_wait(&semPntr);
+    //    sem_wait(&semPntr);
     // Check for codes
-    /* Exit Code */
+    // Exit Code
     if(shmPntr[0]==CODEEXIT && shmPntr[1]==CODEEXIT){
       quitRequest=1;
     }
     else{
-      /* Stop/Zero out Code */
+      // Stop/Zero out Code
       if(shmPntr[0]==CODESTOP && shmPntr[1]==CODESTOP){
         shmPntr[0]=shmPntr[1]=0;
         vecArrPos[0]=vecArrPos[1]=0;
@@ -71,7 +90,7 @@ Window XRootWin;
       // Zero out shmPntr
       shmPntr[0]=shmPntr[1]=0;
       // Unlock semaphore for reading/writing
-      sem_post(&semPntr);
+      //      sem_post(&semPntr);
       // Trim vecArrPos to bounds of vecArr
       if(vecArrPos[0]<(vecArrLen*-1)){vecArrPos[0]=vecArrLen*-1;}
       if(vecArrPos[1]<(vecArrLen*-1)){vecArrPos[1]=vecArrLen*-1;}
@@ -90,9 +109,13 @@ Window XRootWin;
     }
   }
 
-  // Close out memory
-  shm_unlink(shmPntr);
+  // Close shared/allocated memory and exit
+  shm_unlink(&shmPntr);
+  shmdt(shmPntr);
   sem_close(semPntr);
+  sem_unlink(&semPntr);
+  XDestroyWindow(XDisplay, XRootWin);
+  XCloseDisplay(XDisplay);
 
   // Exit
   return(0);
