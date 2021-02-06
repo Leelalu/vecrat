@@ -3,6 +3,11 @@
 #define SHMSIZE 8
 #define SEMNAME "vecratsem"
 
+// Vars
+int shmId;
+int *shmPntr;
+sem_t *semPntr;
+
 int memSetup(int *shmId, int **shmPntr, int **semPntr){
   // Map pointer to memory w/ SHMKEY
   if((*shmId=shmget(SHMKEY, SHMSIZE, IPC_CREAT | 0770)) < 0){
