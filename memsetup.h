@@ -1,39 +1,46 @@
+// Includes
+#include <sys/shm.h>
+#include <fcntl.h>
+#include <errno.h>
+
+
+
 // Definitions
-#define SHMKEY 893422
+#define SHMFILE "/dev/shm/vecratoffset"
 #define SHMSIZE 8
-#define SEMNAME "vecratsem"
 
 // Vars
-int shmId;
 int *shmPntr;
-sem_t *semPntr;
 
-int memSetup(int *shmId, int **shmPntr, int **semPntr){
-  // Map pointer to memory w/ SHMKEY
-  if((*shmId=shmget(SHMKEY, SHMSIZE, IPC_CREAT | 0770)) < 0){
-    printf("Unable to get memory space...\n");
+int getShmBlk(){
+  key_t key;
+  int shmBlkId;
+  int fileDes;
+
+  key=ftok(SHMFILE, 0);
+  if(key < 0){
+    perror("ftok");
+    return(-1);
+  }
+  shmBlkId=shmget(key, SHMSIZE, 0644 | IPC_CREAT);
+  if(shmBlkId < 0){
     perror("shmget");
     return(-1);
-  }
-  else if((*shmPntr=shmat(*shmId, NULL, IPC_CREAT | 0770)) < 0){
-    printf("Unable to get memory space...\n");
-    perror("shmmat");
+    }
+
+  return(shmBlkId);
+}
+
+int *getShmPntr(){
+  int shmBlkId;
+  int *shmBlkPntr;
+
+  shmBlkId=getShmBlk();
+
+  shmBlkPntr=shmat(shmBlkId, NULL, 0);
+  if(shmBlkPntr < 0){
+    perror("shmat");
     return(-1);
   }
-
-  // Create semaphore for locking
-  if((*semPntr=sem_open(SEMNAME, IPC_CREAT, S_IRWXU, 0)) < SEM_FAILED && semPntr!=NULL){
-    printf("Lock memory failed...\n");
-    perror("sem_open");
-    return(-1);
-  }
-
-  // Initialize semaphore
-  if((sem_init(semPntr, 1, 1)) < 0){
-    printf("Initializing semaphore...\n");
-    perror("sem_init");
-    return(-1);
-  }
-
-  return(0);
+  return(shmBlkPntr);
 }
