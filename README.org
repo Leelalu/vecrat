@@ -1,31 +1,28 @@
 * Vecrat
-Applies constant velocity to mouse affected by external commands, communication is through a shared memory file.
+Applies velocity to mouse affected through cmd line.
 ** Installation
 Can install the server and client for vecrat in "/usr/local/bin" with this command:
 #+BEGIN_SRC shell
-make install
+sudo make install
 #+END_SRC
-** Vecrat server
-Holds an array of integer determining velocities with a two pointers (x, y) for selecting from the array. Then repeatedly read from  applies those vectors to mouse through xwarppointer unless the array pointers are both set to zero.
-
-Can start the server through running
+** Usage
+*** Starting
+You can star vecrat by simply launching without arguments
 #+BEGIN_SRC shell
-vecratserver
+vecrat
 #+END_SRC
-** Vecrat client
-Opens a shared memory file then takes two args of type int, stores them in an array of two, then writes to memory file.
-
+*** Alter offset
 To give the server an offset use
 #+BEGIN_SRC shell
 vecrat xoffsetnum yoffsetnum
 #+END_SRC
-
-For stoping mouse movement set the x/yoffsetnum to 111
+*** Stop acceleration
+For stoping mouse movement use --stop flag
 #+BEGIN_SRC shell
-vecrat 111 111
+vecrat --stop
 #+END_SRC
-
-To send a quit request set x/yoffset to 999
+*** Exit vecrat
+To send a quit request use --exit flag
 #+BEGIN_SRC shell
-vecrat 999 999
+vecrat --exit
 #+END_SRC
