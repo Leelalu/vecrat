@@ -8,12 +8,13 @@
 #include <X11/Xlib.h>
 #include "memsetup.h"
 
+
 // Definitions //
 // Customizable Definitions
 #define OFFSETFORMULA(X) X*3
 #define OFFSETMAX 40
 #define OFFSETMIN -40
-// Prog Definitions
+// Ingrained Definitions
 #define CODEEXIT 999
 #define CODESTOP 111
 
@@ -36,7 +37,7 @@ bool isStrInt(char *str){
   return(true);
 }
 // Determin how program is implimented based on args
-int argHandler(int argc, char **argv, int **shmPntr){
+int argHandler(int argc, char **argv, int *shmPntr){
   // If only the command to launch prog entered, check for dups, if none continue
   if(argc==1){
     // Check if shmfile exists
@@ -48,8 +49,8 @@ int argHandler(int argc, char **argv, int **shmPntr){
     // Setup shared memory
     else{
       open(SHMFILE, O_RDWR | O_CREAT, 0777);
-      *shmPntr=getShmPntr();
-      if(*shmPntr<0){
+      shmPntr=getShmPntr();
+      if(shmPntr<0){
         printf("Failed setting up shared memory...");
         return(-1);
       }
@@ -61,21 +62,21 @@ int argHandler(int argc, char **argv, int **shmPntr){
   // Program flags
   else{
     // Setup shared memory
-    *shmPntr=getShmPntr();
-    if(*shmPntr<0){
+    shmPntr=getShmPntr();
+    if(shmPntr<0){
       printf("Failed setting up shared memory...");
       return(-1);
     }
     else if(argc==2){
     // If only one additional args parse
       if(!(strcmp(argv[1], "--stop"))){
-        *shmPntr[0]=*shmPntr[1]=CODESTOP;
-        shmdt(*shmPntr);
+        shmPntr[0]=shmPntr[1]=CODESTOP;
+        shmdt(shmPntr);
         return(-1);
       }
       else if(!(strcmp(argv[1], "--exit"))){
-        *shmPntr[0]=*shmPntr[1]=CODEEXIT;
-        shmdt(*shmPntr);
+        shmPntr[0]=shmPntr[1]=CODEEXIT;
+        shmdt(shmPntr);
         return(-1);
       }
       else{
@@ -85,9 +86,9 @@ int argHandler(int argc, char **argv, int **shmPntr){
     // Alter velocity if 2 additional args
     else if(argc==3){
       if(isStrInt(argv[1]) && isStrInt(argv[2])){
-        *shmPntr[0]=atoi(argv[1]);
-        *shmPntr[1]=atoi(argv[2]);
-        shmdt(*shmPntr);
+        shmPntr[0]=atoi(argv[1]);
+        shmPntr[1]=atoi(argv[2]);
+        shmdt(shmPntr);
         return(-1);
       }
       else{

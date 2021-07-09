@@ -1,17 +1,19 @@
-// Includes
+// Includes //
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <errno.h>
 
 
-
-// Definitions
+// Definitions //
 #define SHMFILE "/dev/shm/vecratoffset"
 #define SHMSIZE 8
 
-// Vars
+
+// Vars //
 int *shmPntr;
 
+
+// Functions //
 int getShmBlk(){
   key_t key;
   int shmBlkId;

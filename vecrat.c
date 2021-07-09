@@ -7,6 +7,8 @@ int main(int argc, char **argv){
     return(1);
   }
 
+  shmPntr=getShmPntr();
+
   // Setup XDisplay/Window for xwarppointer
   if((XDisplay = XOpenDisplay(0)) == NULL){
     printf("Opening x display failed...\n");
@@ -19,6 +21,7 @@ int main(int argc, char **argv){
 
   // Main vector alteration/application loop
   while(!quitRequest){
+    printf("shm1:%d shm2:%d va1:%d va2:%d\n", shmPntr[0], shmPntr[1], vecArrOffset[0], vecArrOffset[1]);
     // Handle Exit Code
     if(shmPntr[0]==CODEEXIT && shmPntr[1]==CODEEXIT){
       quitRequest=1;
