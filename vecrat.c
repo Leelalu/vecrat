@@ -2,15 +2,29 @@
 
 
 int main(int argc, char **argv){
+  // Vars
+  int vecArrOffset[2]={0};
+  Display *XDisplay;
+  Window XRootWin;
+  int quitRequest = 0;
+  int *shmPntr;
+
   // Determine current usage from args
   if(argHandler(argc, argv, &shmPntr)==-1){
     return(1);
   }
 
-  shmPntr=getShmPntr();
+  // Open shared memory
+  open(SHMFILE, O_RDWR | O_CREAT, 0777);
+  shmPntr=getShmPntr(SHMFILE);
+  if(shmPntr<0){
+    printf("Failed setting up shared memory...");
+    return(-1);
+  }
 
   // Setup XDisplay/Window for xwarppointer
-  if((XDisplay = XOpenDisplay(0)) == NULL){
+  XDisplay=XOpenDisplay(0);
+  if(XDisplay==NULL){
     printf("Opening x display failed...\n");
     perror("XOpenDisplay");
     return(1);
@@ -51,9 +65,9 @@ int main(int argc, char **argv){
     	if(vecArrOffset[1]>0){vecArrOffset[1]--;}
     	if(vecArrOffset[0]<0){vecArrOffset[0]++;}
     	if(vecArrOffset[1]<0){vecArrOffset[1]++;}
-    	// Wait
-    	usleep(50000);
     }
+    // Wait
+    usleep(50000);
   }
 
 
@@ -62,7 +76,7 @@ int main(int argc, char **argv){
   XDestroyWindow(XDisplay, XRootWin);
   XCloseDisplay(XDisplay);
   shmdt(shmPntr);
-  shmctl(getShmBlk(), IPC_RMID, NULL);
+  shmctl(getShmBlk(SHMFILE), IPC_RMID, NULL);
   remove(SHMFILE);
 
   // Exit

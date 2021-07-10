@@ -19,12 +19,6 @@
 #define CODESTOP 111
 
 
-// Vars //
-int vecArrOffset[2]={0};
-Display *XDisplay;
-Window XRootWin;
-int quitRequest = 0;
-
 // Func definitions //
 // Determine if multi char string is int
 bool isStrInt(char *str){
@@ -36,6 +30,7 @@ bool isStrInt(char *str){
   }
   return(true);
 }
+
 // Determin how program is implimented based on args
 int argHandler(int argc, char **argv, int *shmPntr){
   // If only the command to launch prog entered, check for dups, if none continue
@@ -46,14 +41,7 @@ int argHandler(int argc, char **argv, int *shmPntr){
       printf("Determined other program running, exiting...\n");
       return(-1);
     }
-    // Setup shared memory
     else{
-      open(SHMFILE, O_RDWR | O_CREAT, 0777);
-      shmPntr=getShmPntr();
-      if(shmPntr<0){
-        printf("Failed setting up shared memory...");
-        return(-1);
-      }
       printf("Starting vecrat...\n");
       return(0);
     }
@@ -62,7 +50,7 @@ int argHandler(int argc, char **argv, int *shmPntr){
   // Program flags
   else{
     // Setup shared memory
-    shmPntr=getShmPntr();
+    shmPntr=getShmPntr(SHMFILE);
     if(shmPntr<0){
       printf("Failed setting up shared memory...");
       return(-1);
