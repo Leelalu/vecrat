@@ -13,7 +13,7 @@
 
 // Definitions //
 // Customizable Definitions
-#define OFFSETFORMULA(X) X*3
+#define OFFSETFORMULA(X) 5*(X*X) + (2*X) + 3
 #define OFFSETMAX 40
 #define OFFSETMIN -40
 

@@ -68,7 +68,7 @@ int main(int argc, char **argv){
     	if(vecArrOffset[0]>OFFSETMAX){vecArrOffset[0]=OFFSETMAX;}
     	if(vecArrOffset[1]>OFFSETMAX){vecArrOffset[1]=OFFSETMAX;}
     	// Apply mouse velocity
-    	XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, OFFSETFORMULA(vecArrOffset[0]), vecArrOffset[1]);
+    	XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, OFFSETFORMULA(vecArrOffset[0]), OFFSETFORMULA(vecArrOffset[1]));
     	XFlush(XDisplay);
     	// Increment/Decrament vecArrOffset towards 0
     	if(vecArrOffset[0]>0){vecArrOffset[0]--;}
