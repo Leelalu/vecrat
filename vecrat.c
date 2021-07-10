@@ -4,21 +4,30 @@
 int main(int argc, char **argv){
   // Vars
   int vecArrOffset[2]={0};
+  int *shmPntr;
+  sem_t *semPntr;
   Display *XDisplay;
   Window XRootWin;
   int quitRequest = 0;
-  int *shmPntr;
 
   // Determine current usage from args
   if(argHandler(argc, argv, &shmPntr)==-1){
+    shmdt(shmPntr);
     return(1);
   }
 
-  // Open shared memory
+  // Create shared memory
   open(SHMFILE, O_RDWR | O_CREAT, 0777);
   shmPntr=getShmPntr(SHMFILE);
   if(shmPntr<0){
     printf("Failed setting up shared memory...");
+    return(-1);
+  }
+
+  // Create semaphore
+  semPntr=sem_open(SEMNAME, O_CREAT, 0643, 1);
+  if(semPntr<0){
+    printf("Failed setting up semaphore...");
     return(-1);
   }
 
@@ -35,7 +44,8 @@ int main(int argc, char **argv){
 
   // Main vector alteration/application loop
   while(!quitRequest){
-    printf("shm1:%d shm2:%d va1:%d va2:%d\n", shmPntr[0], shmPntr[1], vecArrOffset[0], vecArrOffset[1]);
+    // Close semaphore
+    sem_wait(semPntr);
     // Handle Exit Code
     if(shmPntr[0]==CODEEXIT && shmPntr[1]==CODEEXIT){
       quitRequest=1;
@@ -66,6 +76,8 @@ int main(int argc, char **argv){
     	if(vecArrOffset[0]<0){vecArrOffset[0]++;}
     	if(vecArrOffset[1]<0){vecArrOffset[1]++;}
     }
+    // Open semaphore
+    sem_post(semPntr);
     // Wait
     usleep(50000);
   }
