@@ -25,6 +25,7 @@ int main(int argc, char **argv){
   }
 
   // Create semaphore
+  sem_unlink(SEMNAME);
   semPntr=sem_open(SEMNAME, O_CREAT, 0643, 1);
   if(semPntr<0){
     printf("Failed setting up semaphore...");
@@ -89,6 +90,8 @@ int main(int argc, char **argv){
   XCloseDisplay(XDisplay);
   shmdt(shmPntr);
   shmctl(getShmBlk(SHMFILE), IPC_RMID, NULL);
+  sem_close(semPntr);
+  sem_unlink(SEMNAME);
   remove(SHMFILE);
 
   // Exit
