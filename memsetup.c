@@ -55,13 +55,15 @@ int *createShmReader(){
   if(access(SHMFILE, F_OK)==0){
     printf("Found shared memory file at %s...\n", SHMFILE);
   }
-
-  open(SHMFILE, O_RDWR | O_CREAT, 0777);
+  else{
+    open(SHMFILE, O_RDWR | O_CREAT, 0777);
+  }
 
   shmPntr=getShmPntr(SHMFILE);
   if(shmPntr<0){
     printf("Failed setting up shared memory...");
   }
+
   return(shmPntr);
 }
 

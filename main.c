@@ -49,7 +49,6 @@ int main(int argc, char **argv){
 
   // Main vector alteration/application loop
   while(!quitRequest){
-    printf("%d-%d\n", OFFSETFORMULA(offset[0]), OFFSETFORMULA(offset[1]));
     // Close semaphore
     sem_wait(semPntr);
     // Handle Exit Code
@@ -87,10 +86,7 @@ int main(int argc, char **argv){
   }
 
   // Close shared/allocated memory and exit
-  XDestroyWindow(XDisplay, XRootWin);
-  XCloseDisplay(XDisplay);
-  destroyShmSemReader(shmPntr, semPntr);
-
+  destroyMemory(XDisplay, XRootWin, shmPntr, semPntr);
   // Exit
   return(0);
 }

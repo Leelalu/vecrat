@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <X11/Xlib.h>
 #include <sys/sem.h>
 #include <semaphore.h>
 #include "memsetup.h"
@@ -113,4 +114,11 @@ int pullIntTowardsZero(int value){
     value++;
   }
   return(value);
+}
+
+void destroyMemory(Display *XDis, Window XWin, int *shmPntr, sem_t *semPntr){
+  printf("Cleaning up...\n");
+  XDestroyWindow(XDis, XWin);
+  XCloseDisplay(XDis);
+  destroyShmSemReader(shmPntr, semPntr);
 }
