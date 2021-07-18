@@ -1,5 +1,5 @@
 CC=gcc
-FLAGS=-lrt -lpthread -lX11 -O3
+FLAGS=-lrt -lpthread -lX11 -lm -O3
 
 vecrat: vecrat.c memsetup.h
 	$(CC) $(FLAGS) -o vecrat main.c vecrat.c memsetup.c

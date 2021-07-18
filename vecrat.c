@@ -31,31 +31,30 @@ bool isStrInt(char *str){
 int argHandler(int argc, char **argv){
   int *shmPntr;
   sem_t *semPntr;
+
   shmPntr=createShmWriter();
   semPntr=createSemWriter();
 
   // Go through program flags
   if(shmPntr<0 || semPntr<0){
+    printf("Exiting...");
     return(-1);
-    }
-    else if(semPntr<0){
-      printf("Failed setting up semaphore...");
-    }
-    else{
-      // Close semaphore
-      sem_wait(semPntr);
-      // If only one additional args parse
-      if(argc==2){
-        if(!(strcmp(argv[1], "--stop"))){
-          printf("Stoping velocity...\n");
-          shmPntr[0]=shmPntr[1]=CODESTOP;
-        }
-        else if(!(strcmp(argv[1], "--exit"))){
-          printf("Exiting...\n");
-          shmPntr[0]=shmPntr[1]=CODEEXIT;
-        }
+  }
+  else{
+    // Close semaphore
+    sem_wait(semPntr);
+    // If only one additional args parse
+    if(argc==2){
+      if(!(strcmp(argv[1], "--stop"))){
+        printf("Stoping velocity...\n");
+        shmPntr[0]=shmPntr[1]=CODESTOP;
       }
-      // Alter velocity if 2 additional args
+      else if(!(strcmp(argv[1], "--exit"))){
+        printf("Exiting...\n");
+        shmPntr[0]=shmPntr[1]=CODEEXIT;
+      }
+    }
+    // Alter velocity if 2 additional args
       else if(argc==3){
         if(isStrInt(argv[1]) && isStrInt(argv[2])){
           shmPntr[0]=atoi(argv[1]);
@@ -93,4 +92,25 @@ int checkForStopRequest(int xoffset, int yoffset){
   else{
     return(0);
   }
+}
+
+int trimValue(int value, int bounds){
+  if(value>bounds){
+    value=bounds;
+  }
+  else if(value<bounds*-1){
+    value=bounds*-1;
+  }
+
+  return(value);
+}
+
+int pullIntTowardsZero(int value){
+  if(value>0){
+    value--;
+  }
+  else if(value<0){
+    value++;
+  }
+  return(value);
 }

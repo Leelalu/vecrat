@@ -3,18 +3,18 @@
 #include <unistd.h>
 #include <sys/sem.h>
 #include <X11/Xlib.h>
+#include <math.h>
 #include "memsetup.h"
 #include "vecrat.h"
 
 
 // Customizable Definitions //
-#define OFFSETFORMULA(X) X*3
-#define OFFSETMAX 40
-#define OFFSETMIN -40
+#define OFFSETFORMULA(X) pow(X/3, 3)/3
+#define OFFSETTRIM 20
 
 
 // Vars //
-int vecArrOffset[2]={0};
+int offset[2]={0};
 int *shmPntr;
 sem_t *semPntr;
 Display *XDisplay;
@@ -27,15 +27,15 @@ int main(int argc, char **argv){
   // Handle args and exit if args present
   if(argc>1){
     argHandler(argc, argv);
-    return(1);
+    return(0);
   }
 
   // Setup shared memory and semaphore
   shmPntr=createShmReader();
-  if(shmPntr<0){
-
-  }
   semPntr=createSemReader();
+  if(shmPntr<0 || semPntr<0){
+    printf("Exitting...\n");
+  }
 
   // Setup XDisplay/Window for xwarppointer
   XDisplay=XOpenDisplay(0);
@@ -49,6 +49,7 @@ int main(int argc, char **argv){
 
   // Main vector alteration/application loop
   while(!quitRequest){
+    printf("%d-%d\n", OFFSETFORMULA(offset[0]), OFFSETFORMULA(offset[1]));
     // Close semaphore
     sem_wait(semPntr);
     // Handle Exit Code
@@ -57,29 +58,27 @@ int main(int argc, char **argv){
     }
     // Handle Zero out Code
     else if(checkForStopRequest(shmPntr[0], shmPntr[1])){
-      vecArrOffset[0]=vecArrOffset[1]=0;
+      offset[0]=offset[1]=0;
       shmPntr[0]=shmPntr[1]=0;
     }
-    // Otherwise get shmPntr and add to vecArrOffset if any have non-zero value
-    else if(vecArrOffset[0]!=0 || vecArrOffset[1]!=0 || shmPntr[0]!=0 || shmPntr[1]!=0){
+    // Otherwise get shmPntr and add to offset if any have non-zero value
+    else if(offset[0]!=0 || offset[1]!=0 || shmPntr[0]!=0 || shmPntr[1]!=0){
       // Set vec arr
-      vecArrOffset[0]=vecArrOffset[0]+shmPntr[0];
-      vecArrOffset[1]=vecArrOffset[1]+shmPntr[1];
+      offset[0]=offset[0]+shmPntr[0];
+      offset[1]=offset[1]+shmPntr[1];
       // Reset shm
       shmPntr[0]=shmPntr[1]=0;
-      // Trim vecArrOffset to bounds of vecArr
-    	if(vecArrOffset[0]<OFFSETMIN){vecArrOffset[0]=OFFSETMIN;}
-    	if(vecArrOffset[1]<OFFSETMIN){vecArrOffset[1]=OFFSETMIN;}
-    	if(vecArrOffset[0]>OFFSETMAX){vecArrOffset[0]=OFFSETMAX;}
-    	if(vecArrOffset[1]>OFFSETMAX){vecArrOffset[1]=OFFSETMAX;}
-    	// Apply mouse velocity
-    	XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, OFFSETFORMULA(vecArrOffset[0]), OFFSETFORMULA(vecArrOffset[1]));
-    	XFlush(XDisplay);
-    	// Increment/Decrament vecArrOffset towards 0
-    	if(vecArrOffset[0]>0){vecArrOffset[0]--;}
-    	if(vecArrOffset[1]>0){vecArrOffset[1]--;}
-    	if(vecArrOffset[0]<0){vecArrOffset[0]++;}
-    	if(vecArrOffset[1]<0){vecArrOffset[1]++;}
+      // Trim offset to bounds of vecArr
+      offset[0]=trimValue(offset[0], OFFSETTRIM);
+      offset[1]=trimValue(offset[1], OFFSETTRIM);
+      // Apply mouse velocity
+      XWarpPointer(XDisplay, None, None, 0, 0, 0, 0,
+                   OFFSETFORMULA(offset[0]),
+                   OFFSETFORMULA(offset[1]));
+      XFlush(XDisplay);
+      // Increment/Decrament offset towards 0
+      offset[0]=pullIntTowardsZero(offset[0]);
+      offset[1]=pullIntTowardsZero(offset[1]);
     }
     // Open semaphore
     sem_post(semPntr);

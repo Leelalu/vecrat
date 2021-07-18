@@ -11,6 +11,8 @@ bool isStrInt(char *str);
 int argHandler(int argc, char **argv);
 int checkForExitRequest(int xoffset, int yoffset);
 int checkForStopRequest(int xoffset, int yoffset);
+int trimValue(int value, int bounds);
+int pullIntTowardsZero(int value);
 
 
 #endif
