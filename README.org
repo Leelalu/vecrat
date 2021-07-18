@@ -27,15 +27,10 @@ To send a quit request use --exit flag
 vecrat --exit
 #+END_SRC
 ** Configuration
-Configuration can be done by altering the difinitions within vecrat.h
-*** Alter offset algebra formula
+Configuration can be done by altering the difinitions within main.c
+
 To change how the offset controls velocity to fine tune it to you alter this definition.
+For setting the min/max you can set the OFFSETTRIM definition
 #+BEGIN_SRC c
-# define OFFSETFORMULA(X) X*3
-#+END_SRC
-*** Set min/max offset
-For setting the min/max you can set these two definitions.
-#+BEGIN_SRC c
-#define OFFSETMAX 40
-#define OFFSETMIN -40
+#define OFFSETTRIM 20
 #+END_SRC
