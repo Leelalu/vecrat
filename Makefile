@@ -1,14 +1,13 @@
 CC=gcc
 FLAGS=-lrt -lpthread -lX11 -O3
 
-vecrat: vecrat.c
-	$(CC) $(FLAGS) vecrat.c -o vecrat
+vecrat: vecrat.c memsetup.h
+	$(CC) $(FLAGS) -o vecrat main.c vecrat.c memsetup.c
 debug:
-	$(CC) -g $(FLAGS) vecrat.c -o vecrat
+	$(CC) $(FLAGS) -g -o vecrat main.c vecrat.c memsetup.c
 install:
-	sudo $(CC) $(FLAGS) vecrat.c -o /usr/local/bin/vecrat
+	sudo $(CC) $(FLAGS) -o /usr/local/bin/vecrat main.c vecrat.c memsetup.c
 clean:
 	if [ -f "./vecrat" ];then \
 		rm vecrat; \
 	fi; \
-	$(CC) $(FLAGS) vecrat.c -o vecrat

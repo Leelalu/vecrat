@@ -1,99 +1,96 @@
-#include "vecrat.h"
+// Includes //
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
+#include <sys/sem.h>
+#include <semaphore.h>
+#include "memsetup.h"
 
 
-int main(int argc, char **argv){
-  // Vars
-  int vecArrOffset[2]={0};
+// Definitions //
+// Ingrained Definitions
+#define CODEEXIT 999
+#define CODESTOP 111
+
+
+// Func definitions //
+// Determine if multi char string is int
+bool isStrInt(char *str){
+  int strSize=strlen(str);
+  for(int i=0; i<strSize; i++){
+    if(!(isdigit(str[i])) && !(i==0 && str[i]=='-')){
+      return(false);
+    }
+  }
+  return(true);
+}
+
+// Execute program arguments
+int argHandler(int argc, char **argv){
   int *shmPntr;
   sem_t *semPntr;
-  Display *XDisplay;
-  Window XRootWin;
-  int quitRequest = 0;
+  shmPntr=createShmWriter();
+  semPntr=createSemWriter();
 
-  // Determine current usage from args
-  if(argHandler(argc, argv, &shmPntr)==-1){
-    shmdt(shmPntr);
-    return(1);
+  // Go through program flags
+  if(shmPntr<0 || semPntr<0){
+    return(-1);
+    }
+    else if(semPntr<0){
+      printf("Failed setting up semaphore...");
+    }
+    else{
+      // Close semaphore
+      sem_wait(semPntr);
+      // If only one additional args parse
+      if(argc==2){
+        if(!(strcmp(argv[1], "--stop"))){
+          printf("Stoping velocity...\n");
+          shmPntr[0]=shmPntr[1]=CODESTOP;
+        }
+        else if(!(strcmp(argv[1], "--exit"))){
+          printf("Exiting...\n");
+          shmPntr[0]=shmPntr[1]=CODEEXIT;
+        }
+      }
+      // Alter velocity if 2 additional args
+      else if(argc==3){
+        if(isStrInt(argv[1]) && isStrInt(argv[2])){
+          shmPntr[0]=atoi(argv[1]);
+          shmPntr[1]=atoi(argv[2]);
+        }
+       }
+      // Else, print options and leave
+      else{
+        printf("Start vecrat with      'vecrat'\n"
+               "Add acceleration with  'vecrat xoffet yoffset'\n"
+               "Stop acceleration with 'vecrat -stop'\n"
+               "Exit vecrat with       'vecrat --exit'\n");
+      }
+      // Open semaphore
+      sem_post(semPntr);
+      destroyShmSemWriter(shmPntr, semPntr);
   }
+      return(-1);
+}
 
-  // Create shared memory
-  open(SHMFILE, O_RDWR | O_CREAT, 0777);
-  shmPntr=getShmPntr(SHMFILE);
-  if(shmPntr<0){
-    printf("Failed setting up shared memory...");
+// Check for requests
+int checkForExitRequest(int xoffset, int yoffset){
+  if(xoffset==CODEEXIT && yoffset==CODEEXIT){
     return(-1);
   }
+  else{
+    return(0);
+  }
+}
 
-  // Create semaphore
-  sem_unlink(SEMNAME);
-  semPntr=sem_open(SEMNAME, O_CREAT, 0643, 1);
-  if(semPntr<0){
-    printf("Failed setting up semaphore...");
+int checkForStopRequest(int xoffset, int yoffset){
+  if(xoffset==CODESTOP && yoffset==CODESTOP){
     return(-1);
   }
-
-  // Setup XDisplay/Window for xwarppointer
-  XDisplay=XOpenDisplay(0);
-  if(XDisplay==NULL){
-    printf("Opening x display failed...\n");
-    perror("XOpenDisplay");
-    return(1);
+  else{
+    return(0);
   }
-  XRootWin = XRootWindow(XDisplay, 0);
-  XSelectInput(XDisplay, XRootWin, KeyReleaseMask);
-
-
-  // Main vector alteration/application loop
-  while(!quitRequest){
-    // Close semaphore
-    sem_wait(semPntr);
-    // Handle Exit Code
-    if(shmPntr[0]==CODEEXIT && shmPntr[1]==CODEEXIT){
-      quitRequest=1;
-    }
-    // Handle Zero out Code
-    else if(shmPntr[0]==CODESTOP && shmPntr[1]==CODESTOP){
-      vecArrOffset[0]=vecArrOffset[1]=0;
-      shmPntr[0]=shmPntr[1]=0;
-    }
-    // Otherwise get shmPntr and add to vecArrOffset if any have non-zero value
-    else if(vecArrOffset[0]!=0 || vecArrOffset[1]!=0 || shmPntr[0]!=0 || shmPntr[1]!=0){
-      // Set vec arr
-      vecArrOffset[0]=vecArrOffset[0]+shmPntr[0];
-      vecArrOffset[1]=vecArrOffset[1]+shmPntr[1];
-      // Reset shm
-      shmPntr[0]=shmPntr[1]=0;
-      // Trim vecArrOffset to bounds of vecArr
-    	if(vecArrOffset[0]<OFFSETMIN){vecArrOffset[0]=OFFSETMIN;}
-    	if(vecArrOffset[1]<OFFSETMIN){vecArrOffset[1]=OFFSETMIN;}
-    	if(vecArrOffset[0]>OFFSETMAX){vecArrOffset[0]=OFFSETMAX;}
-    	if(vecArrOffset[1]>OFFSETMAX){vecArrOffset[1]=OFFSETMAX;}
-    	// Apply mouse velocity
-    	XWarpPointer(XDisplay, None, None, 0, 0, 0, 0, OFFSETFORMULA(vecArrOffset[0]), OFFSETFORMULA(vecArrOffset[1]));
-    	XFlush(XDisplay);
-    	// Increment/Decrament vecArrOffset towards 0
-    	if(vecArrOffset[0]>0){vecArrOffset[0]--;}
-    	if(vecArrOffset[1]>0){vecArrOffset[1]--;}
-    	if(vecArrOffset[0]<0){vecArrOffset[0]++;}
-    	if(vecArrOffset[1]<0){vecArrOffset[1]++;}
-    }
-    // Open semaphore
-    sem_post(semPntr);
-    // Wait
-    usleep(50000);
-  }
-
-
-
-  // Close shared/allocated memory and exit
-  XDestroyWindow(XDisplay, XRootWin);
-  XCloseDisplay(XDisplay);
-  shmdt(shmPntr);
-  shmctl(getShmBlk(SHMFILE), IPC_RMID, NULL);
-  sem_close(semPntr);
-  sem_unlink(SEMNAME);
-  remove(SHMFILE);
-
-  // Exit
-  return(0);
 }
