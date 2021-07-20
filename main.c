@@ -1,33 +1,40 @@
 // Includes //
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/sem.h>
+#include <semaphore.h>
 #include <X11/Xlib.h>
 #include <math.h>
+#include "sig_handler.h"
 #include "memsetup.h"
 #include "vecrat.h"
 
 
-// Customizable Definitions //
 #define OFFSETFORMULA(X) pow(X/3, 3)/3
 #define OFFSETTRIM 20
 
 
-// Vars //
-int offset[2]={0};
+int offset[2];
 int *shmPntr;
 sem_t *semPntr;
 Display *XDisplay;
 Window XRootWin;
-int quitRequest = 0;
+int quitRequest;
 
 
-// Main Function //
 int main(int argc, char **argv){
-  // Handle args and exit if args present
+  // If args preseng handle and exit
   if(argc>1){
     argHandler(argc, argv);
     return(0);
+  }
+
+  // Apply signal handler to free memory and remove shared mem file
+  applySignalHandlers();
+
+  // Check for shared mem file, if exists assume vecrat already running and exit
+  if(checkIfShmFileExists()){
+    printf("Exitting...\n");
+    return(1);
   }
 
   // Setup shared memory and semaphore
@@ -35,16 +42,16 @@ int main(int argc, char **argv){
   semPntr=createSemReader();
   if(shmPntr<0 || semPntr<0){
     printf("Exitting...\n");
+    return(1);
   }
 
   // Setup XDisplay/Window for xwarppointer
   XDisplay=XOpenDisplay(0);
+  XRootWin = XRootWindow(XDisplay, 0);
   if(XDisplay==NULL){
     printf("Opening x display failed...\n");
-    perror("XOpenDisplay");
     return(1);
   }
-  XRootWin = XRootWindow(XDisplay, 0);
   XSelectInput(XDisplay, XRootWin, KeyReleaseMask);
 
   // Main vector alteration/application loop

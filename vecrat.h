@@ -2,11 +2,10 @@
 #define _VECRATH
 
 
-// Includes //
+#include <X11/Xlib.h>
 #include <stdbool.h>
 
 
-// Func declarations //
 bool isStrInt(char *str);
 int argHandler(int argc, char **argv);
 int checkForExitRequest(int xoffset, int yoffset);
@@ -16,4 +15,4 @@ int pullIntTowardsZero(int value);
 void destroyMemory(Display *XDis, Window XWin, int *shmPntr, sem_t *semPntr);
 
 
-#endif
+#endif // _VECRATH

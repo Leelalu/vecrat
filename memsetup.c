@@ -1,4 +1,3 @@
-// Includes //
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/shm.h>
@@ -8,13 +7,11 @@
 #include <errno.h>
 
 
-// Definition //
 #define SHMFILE "/dev/shm/vecratoffset"
 #define SHMSIZE 8
 #define SEMNAME "vecrat.sem"
 
 
-// Functions
 // Get block of shared memory
 int getShmBlk(char *fileName){
   key_t key;
@@ -117,7 +114,7 @@ int destroyShmSemWriter(int *shmPntr, sem_t *semPntr){
 }
 
 // Check for existing shared memory file
-int checkIfShmExists(){
+int checkIfShmFileExists(){
   if(access(SHMFILE, F_OK)==0){
     printf("Found shared memory file at %s...\n", SHMFILE);
     return(1);
@@ -125,4 +122,11 @@ int checkIfShmExists(){
   else{
     return(0);
   }
+}
+
+// Remove shared memory and semaphore files
+int removeShmSemFile(){
+  remove(SHMFILE);
+  sem_unlink(SEMNAME);
+  return(0);
 }

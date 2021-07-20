@@ -1,4 +1,3 @@
-// Includes //
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -10,13 +9,10 @@
 #include "memsetup.h"
 
 
-// Definitions //
-// Ingrained Definitions
 #define CODEEXIT 999
 #define CODESTOP 111
 
 
-// Func definitions //
 // Determine if multi char string is int
 bool isStrInt(char *str){
   int strSize=strlen(str);

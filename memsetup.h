@@ -2,11 +2,9 @@
 #define _MEMSETUPH
 
 
-// Includes //
 #include <semaphore.h>
 
 
-// Func declarations //
 int getShmBlk(char *fileName);
 int *getShmPntr(char *fileName);
 int *createShmReader();
@@ -15,7 +13,8 @@ sem_t *createSemWriter();
 sem_t *createSemReader();
 int destroyShmSemReader(int *shmPntr, sem_t *semPntr);
 int destroyShmSemWriter(int *shmPntr, sem_t *semPntr);
-int checkIfShmExists();
+int checkIfShmFileExists();
+int removeShmSemFile();
 
 
-#endif
+#endif // _MEMSETUPH
